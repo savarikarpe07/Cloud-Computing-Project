@@ -3,13 +3,29 @@ import tensorflow as tf
 import numpy as np
 from PIL import Image
 
+# -----------------------------------
+# Page Configuration
+# -----------------------------------
+st.set_page_config(
+    page_title="Mango Leaf Disease Detection",
+    page_icon="🍃",
+    layout="centered"
+)
+
+# -----------------------------------
+# Load Model
+# -----------------------------------
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model("mango_model.h5")
+    model = tf.keras.models.load_model("mango_model.h5")
+    return model
 
 model = load_model()
 
-class_names = [
+# -----------------------------------
+# Class Names
+# -----------------------------------
+classes = [
     "Anthracnose",
     "Bacterial Canker",
     "Cutting Weevil",
@@ -20,34 +36,119 @@ class_names = [
     "Sooty Mould"
 ]
 
-st.title("🌿 Mango Leaf Disease Detection")
+# -----------------------------------
+# Header
+# -----------------------------------
+st.markdown(
+    """
+    <h1 style='text-align:center;color:#2E8B57;'>
+        🍃 Mango Leaf Disease Detection System
+    </h1>
 
+    <h4 style='text-align:center;color:gray;'>
+        Deep Learning Based Disease Prediction using MobileNetV2
+    </h4>
+
+    <hr>
+    """,
+    unsafe_allow_html=True
+)
+
+st.write(
+    "Upload a mango leaf image to identify the disease."
+)
+
+# -----------------------------------
+# Upload Image
+# -----------------------------------
 uploaded_file = st.file_uploader(
-    "Upload a Mango Leaf Image",
+    "📤 Upload Mango Leaf Image",
     type=["jpg", "jpeg", "png"]
 )
 
+# -----------------------------------
+# Prediction
+# -----------------------------------
 if uploaded_file is not None:
 
-    image = Image.open(uploaded_file)
-    st.image(image, caption="Uploaded Image", use_container_width=True)
+    image = Image.open(uploaded_file).convert("RGB")
 
-    img = image.resize((128, 128))   # change if your model uses different size
-    img_array = np.array(img)
+    st.markdown("### Uploaded Image")
 
-    if len(img_array.shape) == 2:
-        img_array = np.stack((img_array,) * 3, axis=-1)
+    st.image(
+        image,
+        use_container_width=True
+    )
 
-    if img_array.shape[-1] == 4:
-        img_array = img_array[:, :, :3]
+    # -----------------------------------
+    # PREPROCESSING
+    # -----------------------------------
+    img = image.resize((128, 128))
 
-    img_array = img_array.astype(np.float32) / 255.0
+    img_array = np.array(img, dtype=np.float32)
+
+    # IMPORTANT:
+    # DO NOT divide by 255
+    # Model already contains Rescaling layer
+
     img_array = np.expand_dims(img_array, axis=0)
 
-    prediction = model.predict(img_array)
+    # -----------------------------------
+    # Prediction
+    # -----------------------------------
+    prediction = model.predict(
+        img_array,
+        verbose=0
+    )
 
-    predicted_class = np.argmax(prediction)
-    confidence = np.max(prediction) * 100
+    predicted_class_index = np.argmax(prediction)
 
-    st.success(f"Prediction: {class_names[predicted_class]}")
-    st.write(f"Confidence: {confidence:.2f}%")
+    predicted_class = classes[predicted_class_index]
+
+    confidence = float(
+        np.max(prediction) * 100
+    )
+
+    st.markdown("---")
+
+    st.markdown("## 🔍 Prediction Result")
+
+    st.success(
+        f"🍃 Predicted Disease: {predicted_class}"
+    )
+
+    st.metric(
+        "Confidence Score",
+        f"{confidence:.2f}%"
+    )
+
+    st.progress(confidence / 100)
+
+    # -----------------------------------
+    # Show All Probabilities
+    # -----------------------------------
+    st.markdown("### 📊 Disease Probabilities")
+
+    for i, disease in enumerate(classes):
+
+        prob = float(
+            prediction[0][i] * 100
+        )
+
+        st.write(
+            f"**{disease}** : {prob:.2f}%"
+        )
+
+# -----------------------------------
+# Footer
+# -----------------------------------
+st.markdown("---")
+
+st.markdown(
+    """
+    <div style='text-align:center;color:gray'>
+        Developed using TensorFlow, MobileNetV2 and Streamlit
+    </div>
+    """,
+    unsafe_allow_html=True
+)
