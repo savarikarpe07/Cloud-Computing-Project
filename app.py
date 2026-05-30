@@ -5,7 +5,7 @@ from PIL import Image
 
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model("mango_multiclass_model.h5")
+    return tf.keras.models.load_model("mango_model.h5")
 
 model = load_model()
 
