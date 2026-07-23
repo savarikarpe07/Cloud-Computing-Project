@@ -62,7 +62,7 @@ st.write(
 # Upload Image
 # -----------------------------------
 uploaded_file = st.file_uploader(
-    "📤 Upload Mango Leaf Image",
+    "Upload Mango Leaf Image",
     type=["jpg", "jpeg", "png"]
 )
 
@@ -127,7 +127,7 @@ if uploaded_file is not None:
     # -----------------------------------
     # Show All Probabilities
     # -----------------------------------
-    st.markdown("### 📊 Disease Probabilities")
+    st.markdown("### Disease Probabilities")
 
     for i, disease in enumerate(classes):
 
